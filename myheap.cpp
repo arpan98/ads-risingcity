@@ -3,13 +3,13 @@
 #include <limits>
 #include <math.h>
 
-#include "building.h"
-
 class MyHeap
 {
 private:
-    std::vector<BuildingDetails> v;
+    std::vector<BuildingDetails *> v;
     int heap_size = 0;
+
+    int get_exec_time(int i);
 
     int parent(int i);
     int left(int i);
@@ -18,15 +18,19 @@ private:
     void heapify(int i);
 
 public:
-    int peek_min();
-    int extract_min();
+    bool is_empty();
+    BuildingDetails* extract_min();
     void decrease_key(int i, int key);
-    void insert(BuildingDetails bd);
+    void insert(BuildingDetails *&bd);
+
+    int getHeapSize() {
+        return heap_size;
+    }
 
     void print_heap() {
         std::cout<<"Heap size "<<heap_size<<"\n";
-        for (BuildingDetails item : v) {
-            std::cout<<item.executed_time<<" ";
+        for (int i = 0; i<heap_size; i++) {
+            std::cout<<"("<<v[i]->executed_time<<","<<v[i]->buildingNum<<") ";
         }
         std::cout<<"\n";
     }
@@ -36,16 +40,14 @@ void MyHeap::heapify(int i) {
     int l = left(i);
     int r = right(i);
     int smallest = i;
-    if (l <= heap_size && v[l].executed_time < v[i].executed_time) {
+    if (l < heap_size && *v[l] < *v[i]) {
         smallest = l;
     }
-    if (r <= heap_size && v[r].executed_time < v[smallest].executed_time) {
+    if (r < heap_size && *v[r] < *v[smallest]) {
         smallest = r;
     }
     if (smallest != i) {
-        BuildingDetails temp = v[i];
-        v[i] = v[smallest];
-        v[smallest] = temp;
+        std::swap(v[i], v[smallest]);
         heapify(smallest);
     }
 }
@@ -62,38 +64,43 @@ int MyHeap::right(int i) {
     return 2 * i + 1;
 }
 
-int MyHeap::peek_min() {
-    return v[0].executed_time;
+bool MyHeap::is_empty() {
+    return (heap_size <= 0);
 }
 
-int MyHeap::extract_min() {
+BuildingDetails* MyHeap::extract_min() {
     if (heap_size < 1) {
-        return -1; // Error
+        BuildingDetails *b = new BuildingDetails(0, 0, 0);
+        return b; // Error
     }
-    int min = v[0].executed_time;
-    v[0] = v[heap_size--];
+    // std::cout<<"extract min\n";
+    BuildingDetails *min = v[0];
+    heap_size--;
+    v[0] = v[heap_size];
     heapify(0);
     return min;
 }
 
 void MyHeap::decrease_key(int i, int key) {
-    if (key > v[i].executed_time) {
+    if (key > v[i]->executed_time) {
         return; // Error
     }
-    v[i].executed_time = key;
-    while (i>0 && v[parent(i)].executed_time > v[i].executed_time) {
-        BuildingDetails temp = v[i];
-        v[i] = v[parent(i)];
-        v[parent(i)] = temp;
-        i = parent(i);
+    v[i]->executed_time = key;
+    while (i > 0 && *v[i] < *v[parent(i)]) {
+        std::swap(v[i], v[parent(i)]);
+        i = parent(i);    
     }
 }
 
-void MyHeap::insert(BuildingDetails bd) {
-    int exec_time = bd.executed_time;
-    bd.executed_time = std::numeric_limits<int>::max();
-    heap_size += 1;
-    std::cout<<heap_size<<" "<<exec_time<<" "<<bd.executed_time<<"\n";
-    v.push_back(bd);
+void MyHeap::insert(BuildingDetails *&bd) {
+    int exec_time = bd->executed_time;
+    bd->executed_time = std::numeric_limits<int>::max();
+    // std::cout<<"insert "<<heap_size<<" "<<exec_time<<" "<<bd.executed_time<<" : "<<bd.buildingNum<<"\n";
+    if (v.size() == heap_size) {
+        v.push_back(bd);
+    } else {
+        v[heap_size] = bd;
+    }
+    heap_size++;
     decrease_key(heap_size - 1, exec_time);
 }

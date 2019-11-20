@@ -1,5 +1,5 @@
 CC=g++
-DEPS = building.h myheap.cpp
+DEPS = building.h myheap.cpp rbtree.cpp
 OBJ = main.o 
 
 %.o: %.c $(DEPS)
